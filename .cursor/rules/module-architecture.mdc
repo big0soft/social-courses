@@ -1,0 +1,247 @@
+---
+description: Guidelines for Laravel module development using nwidart/laravel-modules
+---
+# Laravel Module Architecture
+
+This project uses **nwidart/laravel-modules** for modular architecture. Each module is self-contained with its own routes, models, services, and resources.
+
+## Module Structure
+
+Each module in `Modules/{ModuleName}/` follows this structure:
+
+```
+ModuleName/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/     # Module controllers
+│   │   ├── Middleware/      # Module middleware
+│   │   └── Requests/        # Form request classes
+│   ├── Models/              # Eloquent models
+│   ├── Services/            # Business logic services
+│   └── Providers/           # Service providers
+├── config/
+│   └── config.php           # Module configuration
+├── database/
+│   ├── migrations/          # Database migrations
+│   └── seeders/             # Database seeders
+├── resources/
+│   ├── views/               # Blade templates (if needed)
+│   └── assets/              # Frontend assets
+├── routes/
+│   ├── web.php              # Web routes
+│   └── api.php              # API routes
+├── composer.json            # Module dependencies
+├── module.json              # Module metadata
+└── package.json             # Frontend dependencies (if needed)
+```
+
+## Module Naming
+
+- Use **PascalCase** for module names (e.g., `Blog`, `Language`, `PaymentGateways`)
+- Module directory matches module name exactly
+- Module namespace: `Modules\{ModuleName}\...`
+
+## Namespace Conventions
+
+### Controllers
+```php
+namespace Modules\Blog\Http\Controllers;
+
+class BlogController extends Controller
+{
+    // ...
+}
+```
+
+### Models
+```php
+namespace Modules\Blog\Models;
+
+class Blog extends Model
+{
+    // ...
+}
+```
+
+### Services
+```php
+namespace Modules\Blog\Services;
+
+class BlogService
+{
+    // ...
+}
+```
+
+### Requests
+```php
+namespace Modules\Blog\Http\Requests;
+
+class StoreBlogRequest extends FormRequest
+{
+    // ...
+}
+```
+
+## Service Providers
+
+Each module should have:
+- **RouteServiceProvider**: Registers module routes
+- **EventServiceProvider**: Registers module events/listeners
+- **{Module}ServiceProvider**: Main service provider for module registration
+
+Example:
+```php
+namespace Modules\Blog\Providers;
+
+use Illuminate\Support\ServiceProvider;
+
+class BlogServiceProvider extends ServiceProvider
+{
+    public function register(): void
+    {
+        $this->mergeConfigFrom(
+            __DIR__ . '/../config/config.php',
+            'blog'
+        );
+    }
+
+    public function boot(): void
+    {
+        // Module boot logic
+    }
+}
+```
+
+## Routes
+
+- Module routes are registered in `routes/web.php` and `routes/api.php`
+- Routes are automatically loaded by RouteServiceProvider
+- Use route groups with prefixes when appropriate
+- Use middleware groups for authentication/authorization
+
+Example:
+```php
+// Modules/Blog/routes/web.php
+Route::middleware(['auth'])->group(function () {
+    Route::resource('blogs', BlogController::class);
+});
+```
+
+## Models
+
+- Module models should be in `app/Models/` directory
+- Use proper namespaces: `Modules\{ModuleName}\Models`
+- Can reference main app models: `use App\Models\User;`
+- Define relationships with proper return types
+
+Example:
+```php
+namespace Modules\Blog\Models;
+
+use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class Blog extends Model
+{
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+}
+```
+
+## Services
+
+- Module services contain business logic specific to the module
+- Can extend main app services if needed
+- Use dependency injection for dependencies
+- Services can be shared between modules if needed
+
+Example:
+```php
+namespace Modules\Blog\Services;
+
+use Modules\Blog\Models\Blog;
+
+class BlogService
+{
+    public function create(array $data): Blog
+    {
+        return Blog::create($data);
+    }
+}
+```
+
+## Configuration
+
+- Module config in `config/config.php`
+- Access via `config('module-name.key')`
+- Merge config in service provider's `register()` method
+
+## Migrations
+
+- Module migrations in `database/migrations/`
+- Use standard Laravel migration naming: `YYYY_MM_DD_HHMMSS_description.php`
+- Run migrations: `php artisan module:migrate ModuleName`
+- Rollback: `php artisan module:migrate-rollback ModuleName`
+
+## Seeders
+
+- Module seeders in `database/seeders/`
+- Naming: `{ModuleName}DatabaseSeeder`
+- Run seeders: `php artisan module:seed ModuleName`
+
+## Module Dependencies
+
+- Define in module's `composer.json`
+- Use `merge-plugin` in main `composer.json` to include module dependencies
+- Module dependencies are merged with main application dependencies
+
+## Best Practices
+
+1. **Isolation**: Modules should be self-contained
+2. **Communication**: Modules communicate via events, shared services, or direct model relationships
+3. **Reusability**: Extract common functionality to main app services
+4. **Testing**: Each module should have its own tests
+5. **Documentation**: Document module-specific functionality
+6. **Versioning**: Track module versions in `module.json`
+
+## Module Commands
+
+```bash
+# Create new module
+php artisan module:make ModuleName
+
+# Generate controller
+php artisan module:make-controller ControllerName ModuleName
+
+# Generate model
+php artisan module:make-model ModelName ModuleName
+
+# Generate migration
+php artisan module:make-migration create_table_name ModuleName
+
+# Generate service provider
+php artisan module:make-provider ProviderName ModuleName
+
+# Enable/disable module
+php artisan module:enable ModuleName
+php artisan module:disable ModuleName
+```
+
+## Current Modules
+
+- **Blog**: Blog management system
+- **Language**: Multi-language support and translations
+- **PaymentGateways**: Payment gateway integrations (Mollie, PayPal, Stripe, etc.)
+- **Installer**: Installation wizard for initial setup
+- **Updater**: System update functionality
+
+## Integration with Main App
+
+- Modules can use main app models, services, and helpers
+- Main app can use module models and services via full namespace
+- Shared functionality should be in main app, not duplicated in modules
+- Use events for loose coupling between modules and main app

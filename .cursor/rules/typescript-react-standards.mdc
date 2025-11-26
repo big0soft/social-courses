@@ -1,0 +1,225 @@
+---
+globs: *.ts,*.tsx
+---
+# TypeScript & React Coding Standards
+
+## Code Style
+
+- Use **TypeScript strict mode** (enabled in [tsconfig.json](mdc:tsconfig.json))
+- Use **functional components** with hooks (no class components)
+- Use **arrow functions** for component definitions
+- Use **2 spaces** for indentation
+- Use **semicolons** consistently
+- Prefer **named exports** over default exports for utilities
+- Use **PascalCase** for component names
+- Use **camelCase** for variables and functions
+- Use **kebab-case** for file names
+
+## TypeScript
+
+- Always define **types/interfaces** for props and data structures
+- Use **strict null checks** - handle `null` and `undefined` explicitly
+- Avoid `any` - use `unknown` if type is truly unknown
+- Use **type assertions** sparingly, prefer type guards
+- Define **return types** for functions when not obvious
+
+Example:
+```typescript
+interface CourseProps {
+    course: {
+        id: number;
+        title: string;
+        price: number;
+        instructor?: {
+            name: string;
+        };
+    };
+}
+
+export function CourseCard({ course }: CourseProps): JSX.Element {
+    // Implementation
+}
+```
+
+## React Components
+
+- Use **functional components** with TypeScript
+- Use **Inertia.js** for page components: `import { PageProps } from '@inertiajs/react'`
+- Extract reusable logic into **custom hooks**
+- Keep components **small and focused**
+- Use **composition** over inheritance
+
+### Page Components (Inertia)
+
+```typescript
+import { PageProps } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
+
+interface Props extends PageProps {
+    courses: Array<{
+        id: number;
+        title: string;
+    }>;
+}
+
+export default function CoursesIndex({ courses }: Props) {
+    return (
+        <>
+            <Head title="Courses" />
+            <div>
+                {courses.map(course => (
+                    <CourseCard key={course.id} course={course} />
+                ))}
+            </div>
+        </>
+    );
+}
+```
+
+### Reusable Components
+
+```typescript
+interface ButtonProps {
+    children: React.ReactNode;
+    onClick?: () => void;
+    variant?: 'primary' | 'secondary';
+    disabled?: boolean;
+}
+
+export function Button({ 
+    children, 
+    onClick, 
+    variant = 'primary',
+    disabled = false 
+}: ButtonProps): JSX.Element {
+    return (
+        <button
+            onClick={onClick}
+            disabled={disabled}
+            className={`btn btn-${variant}`}
+        >
+            {children}
+        </button>
+    );
+}
+```
+
+## Hooks
+
+- Use **custom hooks** for reusable logic
+- Follow naming convention: `use` prefix (e.g., `useTheme`, `useAuth`)
+- Extract complex state logic into hooks
+- Use **dependency arrays** correctly in `useEffect`
+
+Example:
+```typescript
+export function useCourses() {
+    const [courses, setCourses] = useState<Course[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchCourses().then(data => {
+            setCourses(data);
+            setLoading(false);
+        });
+    }, []);
+
+    return { courses, loading };
+}
+```
+
+## Inertia.js Patterns
+
+- Use `router.visit()` for navigation
+- Use `router.post()`, `router.put()`, `router.delete()` for form submissions
+- Use `useForm` hook from Inertia for form handling
+- Use `Head` component for page titles and meta tags
+
+Example:
+```typescript
+import { useForm } from '@inertiajs/react';
+
+export function CourseForm() {
+    const { data, setData, post, processing, errors } = useForm({
+        title: '',
+        price: 0,
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        post(route('courses.store'));
+    };
+
+    return (
+        <form onSubmit={handleSubmit}>
+            <input
+                value={data.title}
+                onChange={e => setData('title', e.target.value)}
+            />
+            {errors.title && <div>{errors.title}</div>}
+            <button type="submit" disabled={processing}>
+                Create Course
+            </button>
+        </form>
+    );
+}
+```
+
+## File Organization
+
+- **Page components**: `resources/js/pages/{feature}/{page-name}.tsx`
+- **Reusable components**: `resources/js/components/{component-name}.tsx`
+- **Hooks**: `resources/js/hooks/use-{hook-name}.ts`
+- **Types**: `resources/js/types/{feature}.ts`
+- **Utils**: `resources/js/utils/{utility-name}.ts`
+
+## Path Aliases
+
+- Use `@/*` alias for imports from `resources/js/`
+- Example: `import { Button } from '@/components/button'`
+- Example: `import { useAuth } from '@/hooks/use-auth'`
+
+## Styling
+
+- Use **Tailwind CSS** utility classes
+- Use **CSS modules** or **styled-components** only when necessary
+- Follow **mobile-first** responsive design
+- Use **Radix UI** components from `@radix-ui/*` packages
+- Use **Lucide React** for icons: `import { Icon } from 'lucide-react'`
+
+Example:
+```typescript
+<div className="flex flex-col gap-4 p-6 bg-white rounded-lg shadow-md">
+    <h2 className="text-2xl font-bold text-gray-900">
+        {title}
+    </h2>
+</div>
+```
+
+## State Management
+
+- Use **React hooks** (`useState`, `useReducer`) for local state
+- Use **Inertia.js** shared props for server state
+- Use **Zustand** or **Context API** only when necessary for global state
+- Avoid prop drilling - use context or state management library
+
+## Performance
+
+- Use `React.memo()` for expensive components
+- Use `useMemo()` and `useCallback()` appropriately
+- Lazy load heavy components: `const Component = lazy(() => import('./Component'))`
+- Optimize images and assets
+
+## Error Handling
+
+- Use **error boundaries** for component error handling
+- Handle form errors from Inertia: `errors.fieldName`
+- Display user-friendly error messages
+- Log errors appropriately
+
+## Testing Considerations
+
+- Write **testable components** (pure functions when possible)
+- Extract business logic from components
+- Use **TypeScript** to catch errors at compile time
+- Test user interactions, not implementation details

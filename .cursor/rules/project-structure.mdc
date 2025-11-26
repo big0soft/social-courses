@@ -1,0 +1,88 @@
+---
+alwaysApply: true
+---
+# Project Structure Guide
+
+This is a **Laravel 12** application with **Inertia.js** and **React/TypeScript** frontend, using a modular architecture.
+
+## Core Architecture
+
+- **Backend**: Laravel 12 (PHP 8.2+)
+- **Frontend**: React 18 with TypeScript, Inertia.js
+- **Module System**: nwidart/laravel-modules
+- **Styling**: Tailwind CSS 4.0
+- **Build Tool**: Vite
+
+## Directory Structure
+
+### Main Application (`app/`)
+- `Enums/` - PHP enumerations (CardStatus, CourseLevelType, etc.)
+- `Helpers/` - Helper functions (App.php, Utils.php)
+- `Http/Controllers/` - Laravel controllers
+- `Http/Middleware/` - Custom middleware
+- `Http/Requests/` - Form request validation classes
+- `Http/Resources/` - API resources
+- `Models/` - Eloquent models
+- `Services/` - Business logic service classes
+- `Mail/` - Mailable classes
+- `Notifications/` - Notification classes
+
+### Modules (`Modules/`)
+Each module follows this structure:
+- `app/Http/Controllers/` - Module controllers
+- `app/Models/` - Module models
+- `app/Services/` - Module services
+- `app/Providers/` - Service providers
+- `routes/` - Module routes (web.php, api.php)
+- `database/migrations/` - Module migrations
+- `database/seeders/` - Module seeders
+- `resources/views/` - Blade templates (if any)
+- `config/config.php` - Module configuration
+
+Current modules:
+- `Blog/` - Blog management
+- `Language/` - Multi-language support
+- `PaymentGateways/` - Payment gateway integrations
+- `Installer/` - Installation wizard
+- `Updater/` - System updater
+
+### Frontend (`resources/js/`)
+- `pages/` - Inertia.js page components (organized by feature)
+- `components/` - Reusable React components
+- `hooks/` - Custom React hooks
+- `types/` - TypeScript type definitions
+- `utils/` - Utility functions
+
+### Routes (`routes/`)
+- `web.php` - Public web routes
+- `auth.php` - Authentication routes
+- `admin.php` - Admin dashboard routes
+- `instructor.php` - Instructor routes
+- `student.php` - Student routes
+- `payout.php` - Payout routes
+- `console.php` - Artisan commands
+
+## Key Files
+
+- [composer.json](mdc:composer.json) - PHP dependencies
+- [package.json](mdc:package.json) - Node.js dependencies
+- [vite.config.ts](mdc:vite.config.ts) - Vite configuration
+- [tsconfig.json](mdc:tsconfig.json) - TypeScript configuration
+- [bootstrap/app.php](mdc:bootstrap/app.php) - Laravel application bootstrap
+
+## Naming Conventions
+
+- **Controllers**: PascalCase (e.g., `CourseController.php`)
+- **Models**: PascalCase (e.g., `Course.php`)
+- **Services**: PascalCase with "Service" suffix (e.g., `CourseService.php`)
+- **Requests**: PascalCase with "Request" suffix (e.g., `StoreCourseRequest.php`)
+- **React Components**: kebab-case for files (e.g., `course-list.tsx`), PascalCase for component names
+- **Routes**: kebab-case (e.g., `course-details`)
+
+## Important Patterns
+
+1. **Service Layer**: Business logic goes in Service classes, not controllers
+2. **Form Requests**: Use Form Request classes for validation
+3. **Inertia Responses**: Controllers return `Inertia::render()` for React pages
+4. **Module Isolation**: Modules should be self-contained with their own routes, models, and services
+5. **TypeScript**: Frontend uses strict TypeScript with path aliases (`@/*`)

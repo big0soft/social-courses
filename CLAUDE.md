@@ -1,0 +1,2 @@
+- make sure to follow the design system that is currently used and there should be a memory.md file that contains regular changes we do for when I wanna use the AI again for it to have context
+- when the context window is about to run out update memory file

@@ -1,0 +1,195 @@
+---
+globs: *.php
+---
+# PHP & Laravel Coding Standards
+
+## Code Style
+
+- Use **PSR-12** coding standards
+- Use **4 spaces** for indentation (not tabs)
+- Use **strict types** where appropriate: `declare(strict_types=1);`
+- Always use **type hints** for method parameters and return types
+- Use **constructor property promotion** when possible (Laravel 12 style)
+
+## Namespace & Class Structure
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Course;
+use Illuminate\Http\Request;
+
+class CourseController extends Controller
+{
+    public function __construct(
+        protected CourseService $courseService,
+    ) {}
+
+    public function index(Request $request)
+    {
+        // Implementation
+    }
+}
+```
+
+## Controllers
+
+- Keep controllers **thin** - delegate business logic to Services
+- Use **dependency injection** in constructors
+- Return **Inertia responses** for frontend pages: `Inertia::render('page-name', $data)`
+- Use **Form Request classes** for validation, not inline validation
+- Group related routes using `Route::controller()` or resource routes
+
+Example:
+```php
+public function store(StoreCourseRequest $request)
+{
+    $course = $this->courseService->create($request->validated());
+    return redirect()->route('courses.show', $course);
+}
+```
+
+## Models
+
+- Always define `$fillable` or `$guarded`
+- Use `$casts` for type casting (dates, arrays, booleans, etc.)
+- Define relationships with proper return types: `BelongsTo`, `HasMany`, etc.
+- Use **eager loading** to prevent N+1 queries: `Course::with('instructor')->get()`
+- Add **query scopes** for reusable queries
+- Use **Spatie MediaLibrary** traits when handling media files
+
+Example:
+```php
+class Course extends Model implements HasMedia
+{
+    use HasFactory, InteractsWithMedia;
+
+    protected $fillable = [
+        'title',
+        'slug',
+        'instructor_id',
+    ];
+
+    protected $casts = [
+        'published_at' => 'datetime',
+        'is_active' => 'boolean',
+    ];
+
+    public function instructor(): BelongsTo
+    {
+        return $this->belongsTo(Instructor::class);
+    }
+
+    public function scopePublished($query)
+    {
+        return $query->where('status', 'published');
+    }
+}
+```
+
+## Services
+
+- Services contain **business logic** and complex operations
+- Services can extend other services (e.g., `LanguageService extends MediaService`)
+- Use **dependency injection** for dependencies
+- Methods should be **focused and single-purpose**
+- Handle exceptions appropriately
+
+Example:
+```php
+class CourseService
+{
+    public function __construct(
+        protected MediaService $mediaService,
+    ) {}
+
+    public function create(array $data): Course
+    {
+        $course = Course::create($data);
+        // Additional business logic
+        return $course;
+    }
+}
+```
+
+## Form Requests
+
+- Use for **validation logic**
+- Return `$request->validated()` for clean data
+- Add authorization logic in `authorize()` method
+
+Example:
+```php
+class StoreCourseRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return $this->user()->can('create', Course::class);
+    }
+
+    public function rules(): array
+    {
+        return [
+            'title' => 'required|string|max:255',
+            'slug' => 'required|string|unique:courses,slug',
+            'price' => 'required|numeric|min:0',
+        ];
+    }
+}
+```
+
+## Database
+
+- Use **migrations** for all schema changes
+- Use **seeders** for initial data
+- Use **factories** for test data
+- Always use **transactions** for multi-step operations
+- Add **indexes** for frequently queried columns
+
+## Error Handling
+
+- Use **exceptions** for error conditions
+- Throw descriptive exceptions: `throw new Exception("Language already exist");`
+- Use Laravel's built-in exceptions when appropriate
+- Log errors when necessary: `Log::error()`
+
+## Caching
+
+- Use **Cache facade** for caching: `Cache::remember()`, `Cache::rememberForever()`
+- Clear cache when data changes
+- Use descriptive cache keys
+
+## Module Development
+
+- Modules use namespace: `Modules\{ModuleName}\...`
+- Module services: `Modules\{ModuleName}\Services\{ServiceName}`
+- Module models: `Modules\{ModuleName}\Models\{ModelName}`
+- Module controllers: `Modules\{ModuleName}\Http\Controllers\{ControllerName}`
+
+## Common Patterns
+
+### Eager Loading
+```php
+$courses = Course::with(['instructor', 'category', 'enrollments'])->get();
+```
+
+### Query Scopes
+```php
+Course::published()->where('price', '>', 100)->get();
+```
+
+### Service Injection
+```php
+public function __construct(
+    protected CourseService $courseService,
+    protected MediaService $mediaService,
+) {}
+```
+
+### File Operations
+```php
+File::makeDirectory($path, 0777, true, true);
+File::copyDirectory($source, $destination);
+```
